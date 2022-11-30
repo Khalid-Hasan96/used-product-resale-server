@@ -18,6 +18,7 @@ async function run() {
       try {
             const categoriesCollection = client.db("pcbuydb").collection("porductCategories");
             const productCollection = client.db("pcbuydb").collection("products");
+            const usersCollection = client.db("pcbuydb").collection("users");
 
             app.get('/categories', async (req, res) => {
                   const query = {};
@@ -25,6 +26,7 @@ async function run() {
                   const categories = await cursor.toArray();
                   res.send(categories)
             });
+            // products
             app.get('/products', async (req, res) => {
                   const query = {};
                   const product = await productCollection.find(query).toArray();
@@ -35,6 +37,19 @@ async function run() {
                   const query = { categoryId: id };
                   const product = await productCollection.find(query).toArray();
                   res.send(product);
+            });
+
+            // users
+            app.get('/users', async (req, res) => {
+                  const query = {};
+                  const users = await usersCollection.find(query).toArray();
+                  res.send(users)
+            });
+
+            app.post('/users', async (req, res) => {
+                  const query = req.body;
+                  const result = await usersCollection.insertOne(query);
+                  res.send(result);
             });
 
       }
