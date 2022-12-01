@@ -89,7 +89,28 @@ async function run() {
                   const query = { role: 'Seller' };
                   const sellers = await usersCollection.find(query).toArray();
                   res.send(sellers)
-            })
+            });
+
+            app.get('/users/sellers/:id', async (req, res) => {
+                  const id = req.params.id;
+                  const query = { _id: ObjectId(id) };
+                  const seller = await usersCollection.findOne(query);
+                  res.send(seller)
+
+            });
+
+            app.patch('/users/sellers/:id', async (req, res) => {
+                  const id = req.params.id;
+                  const filter = { _id: ObjectId(id) };
+                  const options = { upsert: true };
+                  const updateDoc = {
+                        $set: {
+                              verifiedSeller: 'Verify'
+                        }
+                  };
+                  const result = await usersCollection.updateOne(filter, updateDoc, options);
+                  res.send(result)
+            });
 
             app.post('/users', async (req, res) => {
                   const query = req.body;
