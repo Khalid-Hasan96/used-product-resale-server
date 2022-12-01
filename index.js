@@ -48,6 +48,17 @@ async function run() {
                   next()
             }
 
+            const verifySeller = async (req, res, next) => {
+                  console.log(req.decoded.email);
+                  const decodedEmail = req.decoded.email;
+                  const query = { email: decodedEmail };
+                  const user = await usersCollection.findOne(query);
+                  if (user?.role !== 'Seller') {
+                        return res.status(403).send({ message: 'forbidden access' })
+                  }
+                  next()
+            }
+
             app.get('/jwt', async (req, res) => {
                   const email = req.query.email;
                   const query = { email: email };
@@ -57,7 +68,7 @@ async function run() {
                         return res.send({ accessToken: token })
                   }
                   res.status(403).send({ accessToken: '' })
-            })
+            });
 
             app.get('/categories', async (req, res) => {
                   const query = {};
@@ -65,6 +76,12 @@ async function run() {
                   const categories = await cursor.toArray();
                   res.send(categories)
             });
+
+            app.get('/category', async (req, res) => {
+                  const query = {};
+                  const result = await categoriesCollection.find(query).project({ title: 1 }).toArray();
+                  res.send(result)
+            })
             // products
             app.get('/products', async (req, res) => {
                   const query = {};
@@ -135,6 +152,13 @@ async function run() {
                   const query = { email };
                   const user = await usersCollection.findOne(query);
                   res.send({ isAdmin: user?.role === 'Admin' });
+            });
+
+            app.get('/users/seller/:email', async (req, res) => {
+                  const email = req.params.email;
+                  const query = { email };
+                  const user = await usersCollection.findOne(query);
+                  res.send({ isSeller: user?.role === 'Seller' });
             });
 
             //make admin
