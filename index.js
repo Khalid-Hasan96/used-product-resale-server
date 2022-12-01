@@ -3,8 +3,8 @@ const cors = require('cors');
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
-const port = process.env.PORT || 5000;
 require('dotenv').config();
+const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors());
@@ -36,6 +36,17 @@ async function run() {
             const categoriesCollection = client.db("pcbuydb").collection("porductCategories");
             const productCollection = client.db("pcbuydb").collection("products");
             const usersCollection = client.db("pcbuydb").collection("users");
+
+            const verifyAdmin = async (req, res, next) => {
+                  console.log(req.decoded.email);
+                  const decodedEmail = req.decoded.email;
+                  const query = { email: decodedEmail };
+                  const user = await usersCollection.findOne(query);
+                  if (user?.role !== 'Admin') {
+                        return res.status(403).send({ message: 'forbidden access' })
+                  }
+                  next()
+            }
 
             app.get('/jwt', async (req, res) => {
                   const email = req.query.email;
@@ -74,14 +85,27 @@ async function run() {
                   res.send(users)
             });
 
+            app.get('/users/sellers', async (req, res) => {
+                  const query = { role: 'Seller' };
+                  const sellers = await usersCollection.find(query).toArray();
+                  res.send(sellers)
+            })
+
             app.post('/users', async (req, res) => {
                   const query = req.body;
                   const result = await usersCollection.insertOne(query);
                   res.send(result);
             });
 
+            app.get('/users/admin/:email', async (req, res) => {
+                  const email = req.params.email;
+                  const query = { email };
+                  const user = await usersCollection.findOne(query);
+                  res.send({ isAdmin: user?.role === 'Admin' });
+            });
+
             //make admin
-            app.put('/users/admin/:id', verifyJWT, async (req, res) => {
+            app.put('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
                   const id = req.params.id;
                   const filter = { _id: ObjectId(id) };
                   const options = { upsert: true };
@@ -89,11 +113,12 @@ async function run() {
                         $set: {
                               role: 'Admin'
                         }
-                  }
+                  };
                   const result = await usersCollection.updateOne(filter, updateDoc, options);
                   res.send(result)
             });
-            app.delete('/users/:id', verifyJWT, async (req, res) => {
+
+            app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
                   const id = req.params.id;
                   const query = { _id: ObjectId(id) };
                   const result = await usersCollection.deleteOne(query);
