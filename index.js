@@ -36,6 +36,7 @@ async function run() {
             const categoriesCollection = client.db("pcbuydb").collection("porductCategories");
             const productCollection = client.db("pcbuydb").collection("products");
             const usersCollection = client.db("pcbuydb").collection("users");
+            const bookingCollection = client.db("pcbuydb").collection("booking");
 
             const verifyAdmin = async (req, res, next) => {
                   console.log(req.decoded.email);
@@ -69,6 +70,25 @@ async function run() {
                   }
                   res.status(403).send({ accessToken: '' })
             });
+
+            app.post('/bookings', async (req, res) => {
+                  const booking = req.body;
+                  const query = {
+                        product: booking.product,
+                        price: booking.price,
+                        name: booking.name,
+                        email: booking.name,
+                        phone: booking.phone,
+                        location: booking.location
+                  }
+                  const alreadyBooked = await bookingCollection.find(query).toArray();
+                  if (alreadyBooked) {
+                        const message = `You already booked this item`;
+                        return res.send({ acknowledged: false, message })
+                  }
+                  const result = await bookingCollection.insertOne(booking);
+                  res.send(result)
+            })
 
             app.get('/categories', async (req, res) => {
                   const query = {};
