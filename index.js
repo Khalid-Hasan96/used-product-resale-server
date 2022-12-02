@@ -50,7 +50,6 @@ async function run() {
             }
 
             const verifySeller = async (req, res, next) => {
-                  console.log(req.decoded.email);
                   const decodedEmail = req.decoded.email;
                   const query = { email: decodedEmail };
                   const user = await usersCollection.findOne(query);
@@ -81,14 +80,27 @@ async function run() {
                         phone: booking.phone,
                         location: booking.location
                   }
-                  const alreadyBooked = await bookingCollection.find(query).toArray();
-                  if (alreadyBooked) {
-                        const message = `You already booked this item`;
-                        return res.send({ acknowledged: false, message })
-                  }
+
                   const result = await bookingCollection.insertOne(booking);
                   res.send(result)
-            })
+            });
+            app.get('/bookings', async (req, res) => {
+                  let query = {};
+                  if (req.query.email) {
+                        query = {
+                              email: req.query.email
+                        }
+                  }
+                  const cursor = bookingCollection.find(query);
+                  const products = await cursor.toArray();
+                  res.send(products)
+            });
+            app.delete('/bookings/:id', async (req, res) => {
+                  const id = req.params.id;
+                  const query = { _id: ObjectId(id) };
+                  const booking = await bookingCollection.deleteOne(query);
+                  res.send(booking)
+            });
 
             app.get('/categories', async (req, res) => {
                   const query = {};
