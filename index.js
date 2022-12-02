@@ -85,9 +85,34 @@ async function run() {
             // products
             app.get('/products', async (req, res) => {
                   const query = {};
-                  const product = await productCollection.find(query).toArray();
+                  const product = await productCollection.find(query).sort({ _id: -1 }).toArray();
                   res.send(product);
             });
+            app.get('/myproducts', async (req, res) => {
+                  let query = {};
+                  if (req.query.email) {
+                        query = {
+                              email: req.query.email
+                        }
+                  }
+                  const cursor = productCollection.find(query);
+                  const products = await cursor.toArray();
+                  res.send(products)
+            });
+
+            app.post('/products', async (req, res) => {
+                  const product = req.body;
+                  const result = await productCollection.insertOne(product);
+                  res.send(result);
+            });
+
+            app.delete('/products/:id', async (req, res) => {
+                  const id = req.params.id;
+                  const query = { _id: ObjectId(id) };
+                  const product = await productCollection.deleteOne(query);
+                  res.send(product)
+            });
+
             app.get('/products/:id', async (req, res) => {
                   const id = req.params.id;
                   const query = { categoryId: id };
